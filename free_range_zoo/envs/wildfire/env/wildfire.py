@@ -31,7 +31,7 @@ adjacent tiles and vary in intensity. Fires can also burn out once they reach a 
 - **frame / type openness**: Different frames (e.g. agent abilities or skills) can be added, removed, or modified,
   expending the environmental complexity and requiring agents to infer their neighbors changing abilities.
     - `wildfire`: Agents can damage their equipment over time, and have their capabilities slowly degrade. On
-      the other hand, agents might also recieve different equipment upon leaving the environment to resupply.
+      the other hand, agents might also receive different equipment upon leaving the environment to resupply.
 
 # Specification
 
@@ -481,7 +481,6 @@ class raw_env(BatchedAECEnv):
             batch_is_dead = fires_are_out
 
         newly_terminated = torch.logical_xor(self.terminated, batch_is_dead)
-
         termination_penalty = self.reward_config.termination_kappa * torch.log(self.num_burnouts + 1.0)
         termination_reward = self.reward_config.termination_reward - termination_penalty
         termination_reward = torch.clamp(termination_reward, min=0)

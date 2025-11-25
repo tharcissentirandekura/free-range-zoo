@@ -55,5 +55,5 @@ class WeakestBaseline(Agent):
 
             self.actions[batch, 0] = argmax_store[batch].argmin(dim=0)
             self.actions[batch, 1] = 0
-
+        #TODO
         self.actions[:, 1].masked_fill_(~has_suppressant, -1)  # Agents that do not have suppressant noop

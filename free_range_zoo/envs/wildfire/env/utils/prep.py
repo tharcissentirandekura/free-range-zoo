@@ -10,11 +10,12 @@ from free_range_zoo.envs import wildfire_v0
 import torch
 
 env = wildfire_v0.parallel_env(
-    max_steps=100,
+    max_steps=1000,
     parallel_envs=2,
     configuration=aaai_2025_ol_config(3),
     device=torch.device('cpu'),
-    log_directory="outputs/wildfire_logging_test_0",
+    log_directory="../../configs/outputs/wildfire_logging_test_0",
+    override_initialization_check = True
 )
 
 obs = env.reset()

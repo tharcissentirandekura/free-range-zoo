@@ -238,6 +238,7 @@ def render(path: str,
     df = pd.read_csv(path)
 
     # Convert certain columns from string to actual Python lists
+    # agents = agents
     array_like_cols = [
         'fires',
         'intensity',
@@ -279,7 +280,7 @@ def render(path: str,
 
     # Extract a name from the file path (for debug/UI)
     episode_name_str = os.path.basename(path)
-    print(f"Episode: {episode_name_str}, Total steps: {max_time}")
+    print(f"Episode: {episode_name_str}, Total steps: {max_time + 1}")
 
     # ----------------------------------------------------------------
     # Infer the grid size from the first row's 'fires' data
@@ -480,7 +481,7 @@ def render(path: str,
         draw_time(window, t, screen_size, font)
 
         # Extra text: episode name, current step
-        episode_info_text = f"Episode: {episode_name_str}  Step: {t}/{max_time}"
+        episode_info_text = f"Episode: {episode_name_str}  Step: {t + 1}/{max_time + 1}"
         episode_info_surf = small_font.render(episode_info_text, True, (0, 0, 0))
         window.blit(episode_info_surf, (slider_x, screen_size + 5))
 
@@ -596,7 +597,53 @@ def render(path: str,
                             cell_size=cell_size,
                             x_offset=x_offset,
                             y_offset=y_offset)
+                    # if power == 0:
+                    #     # Build current fire positions for this timestep
+                    #     current_fire_positions = []
+                    #     fire_idx = 0
+                    #     for fy in range(y):
+                    #         for fx in range(x):
+                    #             # Get current fire state from the objects at this timestep
+                    #             # Get the (row, col) of that fire from row-major list
+                    #             fire_obj = next((obj for obj in state_record[t] 
+                    #                            if obj["type"] == "fire" and obj["row"] == fy and obj["col"] == fx), None)
+                                
+                    #             if fire_obj and fire_obj["intensity"] > 0:
+                    #                 current_fire_positions.append({
+                    #                     "fire": fire_idx,
+                    #                     "y": fy,
+                    #                     "x": fx,
+                    #                     "intensity": fire_obj["intensity"]
+                    #                 })
+                    #                 fire_idx += 1
+                    #     # print("The fire next:", current_fire_positions)
+                    #     # Find the target fire
+                    #     fire_to_supress = None
+                    #     if 0 <= fire_num < len(current_fire_positions):
+                    #         fire_to_supress = current_fire_positions[fire_num]
+                        
+                    #     if fire_to_supress:
+                    #         fire_row = fire_to_supress['y']
+                    #         fire_col = fire_to_supress['x']
+                    #         intensity = fire_to_supress['intensity']
 
+                    #         # Draw arrow from agent -> that fire cell
+                    #         z_surf = big_font.render(f"Suppress Fire {fire_num}", True, (0, 0, 250))
+                    #         z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
+                    #         window.blit(z_surf, z_rect)
+                    #         draw_arrow(
+                    #             window,
+                    #             start_pos=(obj["col"], obj["row"]),  # (x, y) for agent
+                    #             end_pos=(fire_col, fire_row),  # (x, y) for the target fire
+                    #             cell_size=cell_size,
+                    #             x_offset=x_offset,
+                    #             y_offset=y_offset,
+                    #             use_water_effect=1 if intensity < 4 and t < max_time else 0)  # Use water effect for suppression
+                        # else:
+                        #     # Fire not found - show error message
+                        #     z_surf = big_font.render(f"Fire {fire_num} not found", True, (255, 0, 0))
+                        #     z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
+                        #     window.blit(z_surf, z_rect)
         # -------------------- Flip display or record frame --------------------
         if render_mode == "human":
             pygame.display.flip()
@@ -622,3 +669,10 @@ def render(path: str,
     if render_mode == "rgb_array":
         return frames
     return None
+
+# render("../../configs/outputs/wildfire_logging_test_0/done.csv", render_mode="human", frame_rate=15)
+# ender(path: str,
+#            render_mode: str = "human",
+#            frame_rate: Optional[int] = 15,
+#            checkpoint: Optional[int] = None) -> Union[None, list]:
+#     """

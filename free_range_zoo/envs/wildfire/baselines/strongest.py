@@ -32,6 +32,7 @@ class StrongestBaseline(Agent):
         Args:
             observation: Dict[str, Any] - Current observation from the environment.
         """
+        # print("Observation received:", observation)
         self.observation, self.t_mapping = observation
         self.t_mapping = self.t_mapping['agent_action_mapping']
 
@@ -55,4 +56,4 @@ class StrongestBaseline(Agent):
             self.actions[batch, 0] = argmax_store[batch].argmax(dim=0)
             self.actions[batch, 1] = 0
 
-        self.actions[:, 1].masked_fill_(~has_suppressant, -1)  # Agents that do not have suppressant noop
+        self.actions[:, 1].masked_fill_( ~has_suppressant, -1)  # Agents that do not have suppressant noop

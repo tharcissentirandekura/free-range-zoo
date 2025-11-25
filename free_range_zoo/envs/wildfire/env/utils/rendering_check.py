@@ -4,7 +4,10 @@ from rendering import render
 
 if __name__ == "__main__":
     # Path to the CSV file
-    csv_path = "/home/alire/repos_wsl/free-range-zoo/outputs/wildfire_logging_test_0/0.csv"
+    # csv_path = "/home/alire/repos_wsl/free-range-zoo/outputs/wildfire_logging_test_0/0.csv"
+    # it would better if path is provided in the command args
+    csv_path = "../../configs/outputs/wildfire_logging_test_0/0.csv"
+    # csv_path = "/Users/tharcisse/Desktop/AdamResearch/Codes/free-range-zoo/free_range_zoo/envs/wildfire/configs/test_logging/0.csv"
 
     # Render mode options: 'human' or 'rgb_array'
     render_mode = "rgb_array"  # Change to "rgb_array" if you want frames
