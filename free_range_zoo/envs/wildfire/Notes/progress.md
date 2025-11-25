@@ -1,6 +1,7 @@
-Nov 3, 2025
+## Nov 3, 2025
 
--------------------------------------------------------------
+### Error Log
+```bash
 (three12) ➜  configs git:(main) ✗ python3 run_wildfire.py 
 Episode: 0.csv, Total steps: 15
 Traceback (most recent call last):
@@ -11,22 +12,27 @@ Traceback (most recent call last):
                ~~~~~~~~~~~~~~~^^^^^
 TypeError: 'NoneType' object is not subscriptable
 (three12) ➜  configs git:(main) ✗ 
+```
 
-Cause: fire_to_suppress is None and we can't get the key since it is not subscriptable
+**Cause:** fire_to_suppress is None and we can't get the key since it is not subscriptable
 
+**Notes:**
 - Cases: The problem is not related to rendering, but the log files not being the correct things we want to pass to the render
 - Try to run the different log file and it may not crash
 
+---
 
+## Nov 8, 2025
+### Running agents with Strongest baseline and Weakest baseline
 
-Nov 8, 2025: running agents with Strongest baseline and Weakest baseline
-Error: e
-    self.observation, self.t_mapping = observation #not running 
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+**Error:**
+```python
+self.observation, self.t_mapping = observation #not running 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ValueError: not enough values to unpack (expected 2, got 1)
+```
 
-Steps: I printed the agent observation and it printed a tensor dict with self,others and tasks as keys
+**Steps:** I printed the agent observation and it printed a tensor dict with self,others and tasks as keys
 - in wildfire.py: agent_action_mapping exists set to a tupple
 
-
-Fix: instead of passing observation[agent_name[0]], change it to observation[agent_name] which is a tuple.
+**Fix:** instead of passing observation[agent_name[0]], change it to observation[agent_name] which is a tuple.
