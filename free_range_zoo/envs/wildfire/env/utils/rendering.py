@@ -280,7 +280,7 @@ def render(path: str,
 
     # Extract a name from the file path (for debug/UI)
     episode_name_str = os.path.basename(path)
-    print(f"Episode: {episode_name_str}, Total steps: {max_time + 1}")
+    print(f"Episode: {episode_name_str}, Total steps: {max_time}")
 
     # ----------------------------------------------------------------
     # Infer the grid size from the first row's 'fires' data
@@ -290,13 +290,13 @@ def render(path: str,
     fires_grid_0 = df['fires'].iloc[0]
     y = len(fires_grid_0)  # number of rows
     x = len(fires_grid_0[0]) if y > 0 else 0  # columns in each row
-
+    
     cell_size = 190
     padding = 140
     grid_width = x * cell_size
     grid_height = y * cell_size
     screen_size = max(grid_width, grid_height) + padding * 2
-
+    print(f"w : {grid_width} h : {grid_height}")
     # If "human", we create a display; otherwise an offscreen Surface
     if render_mode == "human":
         window = pygame.display.set_mode((screen_size, screen_size + 150))
@@ -481,7 +481,7 @@ def render(path: str,
         draw_time(window, t, screen_size, font)
 
         # Extra text: episode name, current step
-        episode_info_text = f"Episode: {episode_name_str}  Step: {t + 1}/{max_time + 1}"
+        episode_info_text = f"Episode: {episode_name_str}  Step: {t}/{max_time}"
         episode_info_surf = small_font.render(episode_info_text, True, (0, 0, 0))
         window.blit(episode_info_surf, (slider_x, screen_size + 5))
 
@@ -529,7 +529,8 @@ def render(path: str,
                 fire_text = [
                     f"Fire {fire_index}",  # Fire index label
                     f"Intensity: {obj['intensity']} - {fire_tag}",
-                    f"Fuel: {obj['fuel']}"
+                    # f"Fuel: {obj['fuel']}",
+                    f"({cell_x},{cell_y})",
                 ]
                 fire_index += 1
 
@@ -553,7 +554,8 @@ def render(path: str,
                 # Show some textual info in the bottom part of the cell
                 agent_text = [
                     f"Agent {obj['id']}", f"Suppressant: {obj['suppressant']}", f"Capacity: {obj['capacity']}",
-                    f"Action: {obj['action']}", f"Reward: {obj['rewards']:.1f}"
+                    f"Action: {obj['action']}", f"Reward: {obj['rewards']:.1f}",
+                    f"({cell_x},{cell_y})"
                 ]
                 for idx, line in enumerate(agent_text):
                     line_surf = small_font.render(line, True, (0, 0, 0))
@@ -562,6 +564,7 @@ def render(path: str,
                     window.blit(line_surf, (cell_x + 5, cell_y + 5 + idx * 15))
 
                 # If the action is [fire_number, power], handle arrow or sleep
+                # fire_number is the index into the action mapping to get the fire number
                 if isinstance(obj["action"], (list, tuple)) and len(obj["action"]) == 2:
                     fire_num, power = obj["action"]  # e.g. [3, 2.0], or [0, -1]
 
@@ -575,75 +578,75 @@ def render(path: str,
                         z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
                         window.blit(z_surf, z_rect)
                     # supress
-                    if power == 0:
-
-                        # If valid fire_number, draw arrow from agent to that fire
-                        # if 0 <= fire_num <= len(fire_positions):
-                        # Get the (row, col) of that fire from row-major list
-                        fire_to_supress = next((fire for fire in fire_positions if fire.get("fire") == fire_num), None)
-                        fire_row = fire_to_supress['y']
-                        fire_col = fire_to_supress['x']
-
-                        # Draw arrow from agent -> that fire cell
-                        z_surf = big_font.render(f"Supress Fire {fire_num}", True, (0, 0, 250))
-                        # Place the "Z" near the center of the agent's tile
-                        # window.blit(z_surf, (draw_x + cell_size // 2, draw_y + cell_size // 2))
-                        z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
-                        window.blit(z_surf, z_rect)
-                        draw_arrow(
-                            window,
-                            start_pos=(obj["col"], obj["row"]),  # (x, y) for agent
-                            end_pos=(fire_col, fire_row),  # (x, y) for the target fire
-                            cell_size=cell_size,
-                            x_offset=x_offset,
-                            y_offset=y_offset)
                     # if power == 0:
-                    #     # Build current fire positions for this timestep
-                    #     current_fire_positions = []
-                    #     fire_idx = 0
-                    #     for fy in range(y):
-                    #         for fx in range(x):
-                    #             # Get current fire state from the objects at this timestep
-                    #             # Get the (row, col) of that fire from row-major list
-                    #             fire_obj = next((obj for obj in state_record[t] 
-                    #                            if obj["type"] == "fire" and obj["row"] == fy and obj["col"] == fx), None)
-                                
-                    #             if fire_obj and fire_obj["intensity"] > 0:
-                    #                 current_fire_positions.append({
-                    #                     "fire": fire_idx,
-                    #                     "y": fy,
-                    #                     "x": fx,
-                    #                     "intensity": fire_obj["intensity"]
-                    #                 })
-                    #                 fire_idx += 1
-                    #     # print("The fire next:", current_fire_positions)
-                    #     # Find the target fire
-                    #     fire_to_supress = None
-                    #     if 0 <= fire_num < len(current_fire_positions):
-                    #         fire_to_supress = current_fire_positions[fire_num]
-                        
-                    #     if fire_to_supress:
-                    #         fire_row = fire_to_supress['y']
-                    #         fire_col = fire_to_supress['x']
-                    #         intensity = fire_to_supress['intensity']
 
-                    #         # Draw arrow from agent -> that fire cell
-                    #         z_surf = big_font.render(f"Suppress Fire {fire_num}", True, (0, 0, 250))
-                    #         z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
-                    #         window.blit(z_surf, z_rect)
-                    #         draw_arrow(
-                    #             window,
-                    #             start_pos=(obj["col"], obj["row"]),  # (x, y) for agent
-                    #             end_pos=(fire_col, fire_row),  # (x, y) for the target fire
-                    #             cell_size=cell_size,
-                    #             x_offset=x_offset,
-                    #             y_offset=y_offset,
-                    #             use_water_effect=1 if intensity < 4 and t < max_time else 0)  # Use water effect for suppression
-                        # else:
-                        #     # Fire not found - show error message
-                        #     z_surf = big_font.render(f"Fire {fire_num} not found", True, (255, 0, 0))
-                        #     z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
-                        #     window.blit(z_surf, z_rect)
+                    #     # If valid fire_number, draw arrow from agent to that fire
+                    #     # if 0 <= fire_num <= len(fire_positions):
+                    #     # Get the (row, col) of that fire from row-major list
+                    #     fire_to_supress = next((fire for fire in fire_positions if fire.get("fire") == fire_num), None)
+                    #     fire_row = fire_to_supress['y']
+                    #     fire_col = fire_to_supress['x']
+
+                    #     # Draw arrow from agent -> that fire cell
+                    #     z_surf = big_font.render(f"Supress Fire {fire_num}", True, (0, 0, 250))
+                    #     # Place the "Z" near the center of the agent's tile
+                    #     # window.blit(z_surf, (draw_x + cell_size // 2, draw_y + cell_size // 2))
+                    #     z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
+                    #     window.blit(z_surf, z_rect)
+                    #     draw_arrow(
+                    #         window,
+                    #         start_pos=(obj["col"], obj["row"]),  # (x, y) for agent
+                    #         end_pos=(fire_col, fire_row),  # (x, y) for the target fire
+                    #         cell_size=cell_size,
+                    #         x_offset=x_offset,
+                    #         y_offset=y_offset)
+                    if power == 0:
+                        # Build current fire positions for this timestep
+                        current_fire_positions = []
+                        fire_idx = 0
+                        for fy in range(y):
+                            for fx in range(x):
+                                # Get current fire state from the objects at this timestep
+                                # Get the (row, col) of that fire from row-major list
+                                fire_obj = next((obj for obj in state_record[t] 
+                                               if obj["type"] == "fire" and obj["row"] == fy and obj["col"] == fx), None)
+                                
+                                if fire_obj and fire_obj["intensity"] > 0:
+                                    current_fire_positions.append({
+                                        "fire": fire_idx,
+                                        "y": fy,
+                                        "x": fx,
+                                        "intensity": fire_obj["intensity"]
+                                    })
+                                    fire_idx += 1
+                        # print("The fire next:", current_fire_positions)
+                        # Find the target fire
+                        fire_to_supress = None
+                        if 0 <= fire_num < len(current_fire_positions):
+                            fire_to_supress = current_fire_positions[fire_num]
+                        
+                        if fire_to_supress:
+                            fire_row = fire_to_supress['y']
+                            fire_col = fire_to_supress['x']
+                            intensity = fire_to_supress['intensity']
+
+                            # Draw arrow from agent -> that fire cell
+                            z_surf = big_font.render(f"Suppress Fire {fire_num}", True, (0, 0, 250))
+                            z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
+                            window.blit(z_surf, z_rect)
+                            draw_arrow(
+                                window,
+                                start_pos=(obj["col"], obj["row"]),  # (x, y) for agent
+                                end_pos=(fire_col, fire_row),  # (x, y) for the target fire
+                                cell_size=cell_size,
+                                x_offset=x_offset,
+                                y_offset=y_offset,
+                                use_water_effect=1 if intensity < 4 and t < max_time else 0)  # Use water effect for suppression
+                        else:
+                            # Fire not found - show error message
+                            z_surf = big_font.render(f"Fire {fire_num} not found", True, (255, 0, 0))
+                            z_rect = z_surf.get_rect(center=(draw_x + 45, draw_y + img_height + 35))
+                            window.blit(z_surf, z_rect)
         # -------------------- Flip display or record frame --------------------
         if render_mode == "human":
             pygame.display.flip()

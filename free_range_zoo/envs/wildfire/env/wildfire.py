@@ -376,7 +376,7 @@ class raw_env(BatchedAECEnv):
 
             # Gather the indexes of all of the agent actions
             task_indices = torch.hstack([self.parallel_ranges.unsqueeze(1), agent_actions[:, 0].unsqueeze(1)])
-            task_indices = agent_action_mapping_pad[task_indices[~refills[agent_index]].split(1, dim=1)]
+            task_indices = agent_action_mapping_pad[task_indices[~refills[agent_index]].split(1, dim=1)] # turn action index to fire number
 
             global_task_indices = (agent_actions[:, 0] + index_shifts.squeeze(1))[~refills[agent_index]]
 
@@ -503,26 +503,26 @@ class raw_env(BatchedAECEnv):
         fire_positions = fires.nonzero(as_tuple=False)
         fire_positions_expanded = fire_positions.expand(self.agent_config.num_agents, -1, -1)
         fire_positions_expanded = fire_positions_expanded.flatten(end_dim=1)
-
+        # print(f"Fire position here now: {fire_positions},\nExtended: {fire_positions_expanded}")
         # Match up all of the agents with all of the tasks
+        # tensor([[0, 0, 2],[0, 1, 2]]) Env 0, row 0 col 2. Env 0, row 1, col 2
         agent_indices = torch.arange(0, self.agent_config.num_agents, device=self.device).unsqueeze(1)
         agent_indices_expanded = agent_indices.expand(-1, num_tasks).flatten().unsqueeze(1)
         agent_indices_expanded = torch.cat([fire_positions_expanded[:, 0].unsqueeze(1), agent_indices_expanded], dim=1)
         agent_positions = self._state.agents.unsqueeze(1).expand(-1, num_tasks, -1).flatten(end_dim=1)
-
+        # print fire locations 
         # Calculate the true range for each of the agents in each environment
         agent_ranges = self.agent_config.attack_range[agent_indices_expanded[:, 1]].flatten()
         equipment_states = self._state.equipment[agent_indices_expanded.split(1, dim=1)].squeeze(1)
         range_bonuses = self.agent_config.equipment_states[equipment_states.unsqueeze(0)][:, :, 2].squeeze(0)
         true_range = (agent_ranges + range_bonuses).flatten()
-
+        
         # Check which agents are in range of which tasks
         in_range = in_range_check.chebyshev(
             agent_position=agent_positions,
             task_position=fire_positions_expanded[:, 1:],
             attack_range=true_range,
         ).reshape(self.agent_config.num_agents, num_tasks)
-
         # Check which agents have suppressants
         has_suppressants = self._state.suppressants[agent_indices_expanded.split(1, dim=1)].squeeze(1) > 0
         has_suppressants = has_suppressants.reshape(self.agent_config.num_agents, num_tasks)
@@ -532,7 +532,7 @@ class raw_env(BatchedAECEnv):
 
         index_shifts = torch.roll(torch.cumsum(num_tasks_per_environment, dim=0), 1, 0)
         index_shifts[0] = 0
-
+        
         task_range = torch.arange(0, num_tasks, device=self.device)
         task_indices = (task_range - index_shifts[fire_positions[:, 0]].flatten())
         task_indices_nested = torch.nested.as_nested_tensor(
@@ -540,7 +540,7 @@ class raw_env(BatchedAECEnv):
             device=self.device,
             layout=torch.jagged,
         )
-
+        # print(f"Step {self.num_moves[0].item()}")
         # Aggregate the indices of all tasks to agent mapping
         for agent, agent_number in self.agent_name_mapping.items():
             # Count the number of tasks in each batch and aggregate the indices
@@ -548,6 +548,19 @@ class raw_env(BatchedAECEnv):
             bad_task_count = num_tasks_per_environment - task_count
 
             tasks = task_indices[checks[agent_number]]
+            # print agent location + its task
+            # if self.parallel_envs == 1:
+            agent_pos = self._state.agents[agent_number]
+            agent_row,agent_col = agent_pos[0].item(),agent_pos[1].item()
+            # print((agent_row,agent_col))
+            fire_list = [] # fires for agent to fight
+            for task_idx in tasks:
+                if task_idx < len(fire_positions):
+                    fire_pos = fire_positions[task_idx]
+                    fire_row, fire_col = fire_pos[1].item(), fire_pos[2].item()
+                    fire_list.append(f"Fire_{task_idx.item()}(x={fire_col},y={fire_row})")
+            print(f"{agent}: pos(x={agent_col}, y={agent_row}) -> {', '.join(fire_list) if fire_list else 'No fires'}")
+            
             batchwise_indices = torch.nested.as_nested_tensor(
                 tasks.split(task_count.tolist(), dim=0),
                 device=self.device,
@@ -570,7 +583,7 @@ class raw_env(BatchedAECEnv):
                 self.agent_action_mapping[agent] = batchwise_indices
 
             self.agent_observation_mapping[agent] = task_indices_nested
-
+        print()
         self.environment_task_count = num_tasks_per_environment
 
     @torch.no_grad()
@@ -594,6 +607,7 @@ class raw_env(BatchedAECEnv):
         lit_fire_indices = lit_fires.nonzero(as_tuple=False)
 
         intensities = self._state.intensity[lit_fire_indices.split(1, dim=1)]
+        # print("The fires here:",self._state.fires[0])
         fires = self._state.fires[lit_fire_indices.split(1, dim=1)]
 
         task_count = lit_fires.sum(dim=(1, 2))

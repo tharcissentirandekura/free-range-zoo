@@ -36,3 +36,13 @@ ValueError: not enough values to unpack (expected 2, got 1)
 - in wildfire.py: agent_action_mapping exists set to a tupple
 
 **Fix:** instead of passing observation[agent_name[0]], change it to observation[agent_name] which is a tuple.
+
+
+## Dec 12, 2025
+
+## Logging inconsistency with rendering
+
+1. In the wildfire logging, we build the agent action by indexing the tasks but the agent action contains the fire index in this agent action map and also the power, representing whether or not the fire should fight or be a NOOP.
+
+So we need a way to trace which fire is really being mapped to an agent and then when we render, .... [For me to understand better how to deal with this]
+

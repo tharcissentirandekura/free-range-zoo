@@ -20,9 +20,9 @@ with open('./WS1.pkl','rb') as f:
 
 wildfire_configuration.reward_config.termination_kappa = 1  # Set a reasonable default value
 
-print("-----------------------------------")
+# print("-----------------------------------")
 print(wildfire_configuration)
-print("-----------------------------------")
+# print("-----------------------------------")
 # count = 0
 log_dir = "outputs/wildfire_logging_test_0"
 # if os.path.exists(log_dir):
@@ -30,7 +30,7 @@ log_dir = "outputs/wildfire_logging_test_0"
 # os.makedirs(log_dir)  # Create a fresh directory for logging
 
 env = wildfire_v0.parallel_env(
-    max_steps = 200,
+    max_steps = 700,
     parallel_envs = 1,
     configuration = wildfire_configuration,
     device=torch.device('cpu'),
@@ -41,11 +41,11 @@ env.reset()
 env = action_mapping_wrapper_v0(env)
 
 observations, infos = env.reset()
-
 from free_range_zoo.envs.wildfire.baselines import NoopBaseline, RandomBaseline,StrongestBaseline,WeakestBaseline
 # Check how many agents are available
 # print("Number of agents:", len(env.agents))
 # print("Available agents:", env.agents)
+
 # Create agents
 agents = {
     env.agents[0]:StrongestBaseline (agent_name = "firefighter_1", parallel_envs = 1),
@@ -54,11 +54,8 @@ agents = {
     # env.agents[3]: RandomBaseline(agent_name = "firefighter_4", parallel_envs = 1),
 }
 
-
 while not torch.all(env.finished):
-    
     for agent_name, agent in agents.items():
-        print("The agent observation:",observations[agent_name])
         agent.observe(observations[agent_name])  # Policy observation 
     agent_actions = {
             agent_name:agents[agent_name].act(action_space = env.action_space(agent_name))
@@ -68,8 +65,10 @@ while not torch.all(env.finished):
     agent_actions = {
         k: torch.tensor(v) if not isinstance(v, torch.Tensor) else v
         for k, v in agent_actions.items()
+        
     }
     observations, rewards, terminations, truncations, infos = env.step(agent_actions)
-env.close()
 
+    
+env.close()
 render("outputs/wildfire_logging_test_0/done.csv", render_mode="human", frame_rate=15)
