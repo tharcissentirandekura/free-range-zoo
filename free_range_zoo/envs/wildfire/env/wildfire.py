@@ -87,7 +87,8 @@ def parallel_env(wrappers: List[Callable] = [], **kwargs) -> BatchedAECEnv:
     env = batched_aec_to_batched_parallel(env)
     return env
 
-
+# Create an agent environment cycle, applying all wrappers and converting the parallel API
+# tharcissentirandekura comment
 def env(wrappers: List[Callable], **kwargs) -> BatchedAECEnv:
     """
     AEC wrapped version of the wildfire environment.
@@ -111,7 +112,7 @@ class raw_env(BatchedAECEnv):
 
     metadata = {"render.modes": ["human", "rgb_array"], "name": "wildfire_v0", "is_parallelizable": True, "render_fps": 2}
 
-    @torch.no_grad()
+    @torch.no_grad() #avoid gradient tracking for efficiency
     def __init__(self,
                  *args,
                  observe_other_suppressant: bool = False,
@@ -131,9 +132,15 @@ class raw_env(BatchedAECEnv):
         self.observe_other_suppressant = observe_other_suppressant
         self.observe_other_power = observe_other_power
         self.show_bad_actions = show_bad_actions
-
+        # renaming agents given number of them: indexing I guess
+        # create agents name
         self.possible_agents = tuple(f"firefighter_{i}" for i in range(1, self.agent_config.num_agents + 1))
+        # Map an agent name to a tensor index.
+        # That's what the zip does, map values of similar index in different iteratable objects
+        #  e.g agent0 -> tensor(0), etc
         self.agent_name_mapping = dict(zip(self.possible_agents, torch.arange(0, len(self.possible_agents), device=self.device)))
+        # Now map an agents to its environment position coordinates
+        # agent 0 -> (0,0), etx
         self.agent_position_mapping = dict(zip(self.possible_agents, self.agent_config.agents))
 
         self.ignition_temp = self.fire_config.ignition_temp
@@ -150,11 +157,13 @@ class raw_env(BatchedAECEnv):
         # Create the agent mapping for observation ordering
         agent_ids = torch.arange(0, self.agent_config.num_agents, device=self.device)
         self.observation_ordering = {}
+        # For each agent, store the indices for all other agents for observations
+        # At this point, agents can observe all other agents?
         for agent in self.possible_agents:
             agent_idx = self.agent_name_mapping[agent]
-            other_agents = agent_ids[agent_ids != agent_idx]
+            other_agents = agent_ids[agent_ids != agent_idx] # agents that isn't itself
             self.observation_ordering[agent] = other_agents
-
+        # Set the agent and fire observation upper bounds 
         self.agent_observation_bounds = tuple([
             self.max_y,
             self.max_x,
@@ -167,7 +176,7 @@ class raw_env(BatchedAECEnv):
             self.fire_config.max_fire_type,
             self.fire_config.num_fire_states,
         ])
-
+        # Determining what is visible in others observations
         observation_mask = torch.ones(4, dtype=torch.bool, device=self.device)
         observation_mask[2] = self.observe_other_power
         observation_mask[3] = self.observe_other_suppressant
