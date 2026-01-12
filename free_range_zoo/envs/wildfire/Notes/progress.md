@@ -2,8 +2,6 @@
 
 ### Error Log
 ```bash
-(three12) ➜  configs git:(main) ✗ python3 run_wildfire.py 
-Episode: 0.csv, Total steps: 15
 Traceback (most recent call last):
   File "free-range-zoo/free_range_zoo/envs/wildfire/configs/run_wildfire.py", line 57, in <module>
     render("outputs/wildfire_logging_test_0/0.csv", render_mode="human", frame_rate=15)
@@ -19,10 +17,10 @@ TypeError: 'NoneType' object is not subscriptable
 **Notes:**
 - Cases: The problem is not related to rendering, but the log files not being the correct things we want to pass to the render
 - Try to run the different log file and it may not crash
-
 ---
 
 ## Nov 8, 2025
+
 ### Running agents with Strongest baseline and Weakest baseline
 
 **Error:**
@@ -46,7 +44,7 @@ ValueError: not enough values to unpack (expected 2, got 1)
 
 So we need a way to trace which fire is really being mapped to an agent and then when we render, .... [For me to understand better how to deal with this]
 
-# January 12, 2025: New error log file
+## January 12, 2026: Updating error logs + proposed fixes
 
 - Running the most recent changes from main repository
 Unresolved issues:
